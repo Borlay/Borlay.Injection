@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Paulius Kanoverskis</Authors>
+    <Description>Simple dependency injection for .net Standard</Description>
+    <RepositoryUrl>https://github.com/Borlay/Borlay.Injection</RepositoryUrl>
+    <PackageProjectUrl>http://borlay.org</PackageProjectUrl>
+    <PackageTags>dependency injection</PackageTags>
+    <PackageLicenseUrl>https://github.com/Borlay/Borlay.Injection/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
 </Project>
