@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borlay.Injection", "Borlay.Injection\Borlay.Injection.csproj", "{01C9B33F-7455-48C6-B413-1755C59CE1B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Borlay.Injection.Tests", "Borlay.Injection.Tests\Borlay.Injection.Tests.csproj", "{FB0C7065-EED2-4CBD-A800-A09E95155B48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{01C9B33F-7455-48C6-B413-1755C59CE1B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01C9B33F-7455-48C6-B413-1755C59CE1B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01C9B33F-7455-48C6-B413-1755C59CE1B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB0C7065-EED2-4CBD-A800-A09E95155B48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB0C7065-EED2-4CBD-A800-A09E95155B48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB0C7065-EED2-4CBD-A800-A09E95155B48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB0C7065-EED2-4CBD-A800-A09E95155B48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
