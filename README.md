@@ -7,6 +7,6 @@ Simple dependency injection.
 ### Nuget
 
 ```PowerShell
-Install-Package Borlay.Iota.Library
+Install-Package Borlay.Injection
 ```
 [Borlay.Injection nuget](https://www.nuget.org/packages/Borlay.Injection/)
