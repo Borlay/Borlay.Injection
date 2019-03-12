@@ -14,6 +14,8 @@ namespace Borlay.Injection
 
         public IResolver Resolver => resolver;
 
+        public bool IsDisposed => isDisposed;
+
         public ResolverSession(IResolver resolver)
         {
             this.resolver = resolver;

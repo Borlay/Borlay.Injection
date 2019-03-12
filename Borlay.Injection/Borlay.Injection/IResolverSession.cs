@@ -13,5 +13,7 @@ namespace Borlay.Injection
         T Resolve<T>();
 
         object Resolve(Type type);
+
+        bool IsDisposed { get; }
     }
 }
