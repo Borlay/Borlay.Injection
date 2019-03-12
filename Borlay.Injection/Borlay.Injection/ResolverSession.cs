@@ -39,13 +39,35 @@ namespace Borlay.Injection
 
         public void Dispose()
         {
+            if (!TryDispose(out var exception))
+                throw exception;
+        }
+
+        public bool TryDispose(out AggregateException aggregateException)
+        {
             isDisposed = true;
 
+            List<Exception> exceptions = new List<Exception>();
             while (disposables.Count > 0)
             {
-                if (disposables.TryTake(out var dispose))
-                    dispose.Dispose();
+                try
+                {
+                    if (disposables.TryTake(out var dispose))
+                        dispose.Dispose();
+                }
+                catch(Exception e)
+                {
+                    exceptions.Add(e);
+                }
             }
+
+            aggregateException = null;
+            if (exceptions.Count > 0)
+            {
+                aggregateException = new AggregateException(exceptions);
+                return false;
+            }
+            return true;
         }
 
         public T Resolve<T>()
