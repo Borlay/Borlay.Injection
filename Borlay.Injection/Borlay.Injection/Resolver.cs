@@ -39,7 +39,7 @@ namespace Borlay.Injection
             return false;
         }
 
-        public void Register<T>(Func<Tuple<T, Action>> provider, bool includeBase = true)
+        public void Register<T>(Func<IResolverSession, Tuple<T, Action>> provider, bool includeBase = true)
         {
             Register(typeof(T), new ResolverItemFactory<T>(provider, false), includeBase);
         }
@@ -79,22 +79,13 @@ namespace Borlay.Injection
         public void Register(Type type, bool includeBase, bool singleton = false)
         {
             if(singleton)
-                Register(type, new ResolverItemFactory<object>(() => GetSingletoneInstance(type)), includeBase);
+                Register(type, new ResolverItemFactory<object>((s) => GetSingletoneInstance(type)), includeBase);
             else
             {
-                Register(type, new ResolverItemFactory<object>(() =>
+                Register(type, new ResolverItemFactory<object>((session) =>
                 {
-                    var session = this.CreateSession();
-                    try
-                    {
-                        var instance = session.CreateInstance(type);
-                        return new Tuple<object, Action>(instance, session.Dispose);
-                    }
-                    catch
-                    {
-                        session.Dispose();
-                        throw;
-                    }
+                    var instance = session.CreateInstance(type);
+                    return new Tuple<object, Action>(instance, null);
                 }, false), includeBase);
             }
         }
@@ -164,12 +155,12 @@ namespace Borlay.Injection
         //    return CreateInstance(this, typeInfo);
         //}
 
-        public ResolverItem<T> Resolve<T>()
+        public ICreateFactory Resolve<T>()
         {
-            return Resolve(typeof(T)).As<T>();
+            return Resolve(typeof(T));
         }
 
-        public ResolverItem<object> Resolve(Type type)
+        public ICreateFactory Resolve(Type type)
         {
             if (TryResolve(type, out var value))
                 return value;
@@ -177,27 +168,23 @@ namespace Borlay.Injection
             throw new KeyNotFoundException($"Instance for type '{type.Name}' not found");
         }
 
-        public bool TryResolve<T>(out ResolverItem<T> value)
+        public bool TryResolve<T>(out ICreateFactory createFactory)
         {
-            value = null;
-            if(TryResolve(typeof(T), out var obj))
+            createFactory = null;
+            if(TryResolve(typeof(T), out createFactory))
             {
-                value = obj.As<T>();
                 return true;
             }
             return false;
         }
 
-        public bool TryResolve(Type type, out ResolverItem<object> value)
+        public bool TryResolve(Type type, out ICreateFactory createFactory)
         {
-            value = null;
-            if (providers.TryGetValue(type, out var provider))
-            {
-                value = provider.Create();
+            createFactory = null;
+            if (providers.TryGetValue(type, out createFactory))
                 return true;
-            }
 
-            return Parent?.TryResolve(type, out value) ?? false;
+            return Parent?.TryResolve(type, out createFactory) ?? false;
         }
 
         public virtual void LoadFromReference<T>()

@@ -34,43 +34,43 @@ namespace Borlay.Injection
             return Any(r => r.Contains(type, parent));
         }
 
-        public ResolverItem<T> Resolve<T>()
+        public ICreateFactory Resolve<T>()
         {
-            ResolverItem<T> value = null;
+            ICreateFactory value = null;
             if (Any(r => r.TryResolve<T>(out value)))
                 return value;
 
             throw new KeyNotFoundException($"Instance for type '{typeof(T).Name}' not found");
         }
 
-        public ResolverItem<object> Resolve(Type type)
+        public ICreateFactory Resolve(Type type)
         {
-            ResolverItem<object> value = null;
+            ICreateFactory value = null;
             if (Any(r => r.TryResolve(type, out value)))
                 return value;
 
             throw new KeyNotFoundException($"Instance for type '{type.Name}' not found");
         }
 
-        public bool TryResolve(Type type, out ResolverItem<object> value)
+        public bool TryResolve(Type type, out ICreateFactory createFactory)
         {
-            value = null;
-            ResolverItem<object> val = null;
+            createFactory = null;
+            ICreateFactory val = null;
             if (Any(r => r.TryResolve(type, out val)))
             {
-                value = val;
+                createFactory = val;
                 return true;
             }
             return false;
         }
 
-        public bool TryResolve<T>(out ResolverItem<T> value)
+        public bool TryResolve<T>(out ICreateFactory createFactory)
         {
-            value = null;
-            ResolverItem<T> val = null;
+            createFactory = null;
+            ICreateFactory val = null;
             if (Any(r => r.TryResolve<T>(out val)))
             {
-                value = val;
+                createFactory = val;
                 return true;
             }
             return false;

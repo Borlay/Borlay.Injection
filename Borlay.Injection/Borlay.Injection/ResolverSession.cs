@@ -75,7 +75,8 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
-            var item = resolver.Resolve<T>();
+            var createFactory = resolver.Resolve<T>();
+            var item = createFactory.Create<T>(this);
             if (!item.IsSingletone)
                 disposables.Add(item);
 
@@ -87,7 +88,8 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
-            var item = resolver.Resolve(type);
+            var createFactory = resolver.Resolve(type);
+            var item = createFactory.Create(this);
             if (!item.IsSingletone)
                 disposables.Add(item);
 
@@ -100,8 +102,9 @@ namespace Borlay.Injection
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
             value = default(T);
-            if(resolver.TryResolve<T>(out var item))
+            if(resolver.TryResolve<T>(out var createFactory))
             {
+                var item = createFactory.Create<T>(this);
                 if (!item.IsSingletone)
                     disposables.Add(item);
 
@@ -118,8 +121,9 @@ namespace Borlay.Injection
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
             value = null;
-            if (resolver.TryResolve(type, out var item))
+            if (resolver.TryResolve(type, out var createFactory))
             {
+                var item = createFactory.Create(this);
                 if (!item.IsSingletone)
                     disposables.Add(item);
 

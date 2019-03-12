@@ -6,17 +6,17 @@ namespace Borlay.Injection
 {
     public interface ICreateFactory
     {
-        ResolverItem<object> Create();
-        ResolverItem<T> Create<T>();
+        ResolverItem<object> Create(IResolverSession session);
+        ResolverItem<T> Create<T>(IResolverSession session);
     }
 
     public class ResolverItemFactory<TResult> : ICreateFactory
     {
-        public Func<Tuple<TResult, Action>> Factory { get; private set; }
+        public Func<IResolverSession, Tuple<TResult, Action>> Factory { get; private set; }
 
         public bool IsSingletone { get; private set; }
 
-        public ResolverItemFactory(Func<Tuple<TResult, Action>> factory, bool isSingletone)
+        public ResolverItemFactory(Func<IResolverSession, Tuple<TResult, Action>> factory, bool isSingletone)
         {
             if (factory == null)
                 throw new ArgumentNullException(nameof(factory));
@@ -31,32 +31,32 @@ namespace Borlay.Injection
                 throw new ArgumentNullException(nameof(instance));
 
             var tuple = new Tuple<TResult, Action>(instance, null);
-            this.Factory = () => tuple;
+            this.Factory = (s) => tuple;
             this.IsSingletone = true;
         }
 
-        public ResolverItemFactory(Func<TResult> singletoneProvider)
+        public ResolverItemFactory(Func<IResolverSession, TResult> singletoneProvider)
         {
             if (singletoneProvider == null)
                 throw new ArgumentNullException(nameof(singletoneProvider));
 
             Tuple<TResult, Action> tuple = null;
-            this.Factory = () =>
+            this.Factory = (s) =>
             {
-                return tuple ?? (tuple = new Tuple<TResult, Action>(singletoneProvider(), null));
+                return tuple ?? (tuple = new Tuple<TResult, Action>(singletoneProvider(s), null));
             };
             this.IsSingletone = true;
         }
 
-        public ResolverItem<object> Create()
+        public ResolverItem<object> Create(IResolverSession session)
         {
-            var result = Factory.Invoke();
+            var result = Factory.Invoke(session);
             return new ResolverItem<object>(result.Item1, result.Item2, IsSingletone);
         }
 
-        public ResolverItem<T> Create<T>()
+        public ResolverItem<T> Create<T>(IResolverSession session)
         {
-            var result = Factory.Invoke();
+            var result = Factory.Invoke(session);
             return new ResolverItem<T>((T)(object)result.Item1, result.Item2, IsSingletone);
         }
     }

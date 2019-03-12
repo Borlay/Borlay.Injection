@@ -9,11 +9,11 @@ namespace Borlay.Injection
         bool Contains<T>(bool parent);
         bool Contains(Type type, bool parent);
 
-        bool TryResolve<T>(out ResolverItem<T> value);
-        bool TryResolve(Type type, out ResolverItem<object> value);
+        bool TryResolve<T>(out ICreateFactory createFactory);
+        bool TryResolve(Type type, out ICreateFactory createFactory);
 
-        ResolverItem<T> Resolve<T>();
-        ResolverItem<object> Resolve(Type type);
+        ICreateFactory Resolve<T>();
+        ICreateFactory Resolve(Type type);
 
         IResolverSession CreateSession();
     }
