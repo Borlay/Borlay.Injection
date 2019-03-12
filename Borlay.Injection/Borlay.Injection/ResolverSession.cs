@@ -9,7 +9,7 @@ namespace Borlay.Injection
     public class ResolverSession : IResolverSession
     {
         private readonly IResolver resolver;
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private readonly ConcurrentBag<IDisposable> disposables = new ConcurrentBag<IDisposable>();
 
         public IResolver Resolver => resolver;
 
@@ -30,10 +30,10 @@ namespace Borlay.Injection
 
         public void Dispose()
         {
-            while(disposables.Count > 0)
+            while (disposables.Count > 0)
             {
-                disposables[0].Dispose();
-                disposables.RemoveAt(0);
+                if (disposables.TryTake(out var dispose))
+                    dispose.Dispose();
             }
         }
 

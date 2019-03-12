@@ -10,6 +10,7 @@
     <PackageTags>dependency injection</PackageTags>
     <PackageLicenseUrl>https://github.com/Borlay/Borlay.Injection/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
 </Project>

@@ -8,9 +8,9 @@ namespace Borlay.Injection
 {
     public class Resolver : IResolver
     {
-        private readonly Dictionary<Type, ICreateFactory> providers = new Dictionary<Type, ICreateFactory>();
+        private readonly ConcurrentDictionary<Type, ICreateFactory> providers = new ConcurrentDictionary<Type, ICreateFactory>();
         private readonly ConcurrentDictionary<Type, object> instances = new ConcurrentDictionary<Type, object>();
-        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private readonly ConcurrentBag<IDisposable> disposables = new ConcurrentBag<IDisposable>();
 
         public IResolver Parent { get; }
 
@@ -265,8 +265,8 @@ namespace Borlay.Injection
 
             while (disposables.Count > 0)
             {
-                disposables[0].Dispose();
-                disposables.RemoveAt(0);
+                if (disposables.TryTake(out var dispose))
+                    dispose.Dispose();
             }
         }
     }
