@@ -10,6 +10,7 @@ namespace Borlay.Injection
     {
         private readonly IResolver resolver;
         private readonly ConcurrentBag<IDisposable> disposables = new ConcurrentBag<IDisposable>();
+        private volatile bool isDisposed = false;
 
         public IResolver Resolver => resolver;
 
@@ -20,16 +21,24 @@ namespace Borlay.Injection
 
         public bool Contains<T>(bool parent)
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             return resolver.Contains<T>(parent);
         }
 
         public bool Contains(Type type, bool parent)
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             return resolver.Contains(type, parent);
         }
 
         public void Dispose()
         {
+            isDisposed = true;
+
             while (disposables.Count > 0)
             {
                 if (disposables.TryTake(out var dispose))
@@ -39,6 +48,9 @@ namespace Borlay.Injection
 
         public T Resolve<T>()
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             var item = resolver.Resolve<T>();
             if (!item.IsSingletone)
                 disposables.Add(item);
@@ -48,6 +60,9 @@ namespace Borlay.Injection
 
         public object Resolve(Type type)
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             var item = resolver.Resolve(type);
             if (!item.IsSingletone)
                 disposables.Add(item);
@@ -57,6 +72,9 @@ namespace Borlay.Injection
 
         public bool TryResolve<T>(out T value)
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             value = default(T);
             if(resolver.TryResolve<T>(out var item))
             {
@@ -72,6 +90,9 @@ namespace Borlay.Injection
 
         public bool TryResolve(Type type, out object value)
         {
+            if (isDisposed)
+                throw new ObjectDisposedException(nameof(ResolverSession));
+
             value = null;
             if (resolver.TryResolve(type, out var item))
             {
