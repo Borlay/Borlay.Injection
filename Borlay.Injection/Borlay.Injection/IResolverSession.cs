@@ -15,5 +15,7 @@ namespace Borlay.Injection
         object Resolve(Type type);
 
         bool IsDisposed { get; }
+
+        bool TryDispose(out AggregateException aggregateException);
     }
 }
