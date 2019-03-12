@@ -80,7 +80,7 @@ namespace Borlay.Injection.Tests
         public void RegisterProviderAndGet()
         {
             var resolver = new Resolver();
-            resolver.Register(() => new Tuple<ToResolve4, Action>(new ToResolve4(), null), true);
+            resolver.Register((s) => new Tuple<ToResolve4, Action>(new ToResolve4(), null), true);
             var toResolve = resolver.Resolve<IToResolve4>();
             Assert.IsNotNull(toResolve);
         }
@@ -109,14 +109,14 @@ namespace Borlay.Injection.Tests
         {
             var resolver = new Resolver();
             resolver.LoadFromReference<ResolverTests>();
-            var toResolve = resolver.Resolve<ToResolve>();
+            var toResolve = resolver.CreateSession().Resolve<ToResolve>();
             Assert.IsNotNull(toResolve);
 
-            toResolve.Result.Index = 2;
+            toResolve.Index = 2;
 
-            toResolve = resolver.Resolve<ToResolve>();
+            toResolve = resolver.CreateSession().Resolve<ToResolve>();
             Assert.IsNotNull(toResolve);
-            Assert.AreEqual(0, toResolve.Result.Index);
+            Assert.AreEqual(0, toResolve.Index);
         }
 
         [TestMethod]
@@ -124,14 +124,14 @@ namespace Borlay.Injection.Tests
         {
             var resolver = new Resolver();
             resolver.LoadFromReference<ResolverTests>();
-            var toResolve = resolver.Resolve<ToResolve2>();
+            var toResolve = resolver.CreateSession().Resolve<ToResolve2>();
             Assert.IsNotNull(toResolve);
 
-            toResolve.Result.Index = 2;
+            toResolve.Index = 2;
 
-            toResolve = resolver.Resolve<ToResolve2>();
+            toResolve = resolver.CreateSession().Resolve<ToResolve2>();
             Assert.IsNotNull(toResolve);
-            Assert.AreEqual(2, toResolve.Result.Index);
+            Assert.AreEqual(2, toResolve.Index);
         }
 
         [TestMethod]
@@ -161,6 +161,7 @@ namespace Borlay.Injection.Tests
             var parent = new Resolver();
             var resolver = new Resolver(parent);
 
+
             parent.LoadFromReference<ResolverTests>();
 
             var toResolve = resolver.GetSingletoneInstance<ToResolve2>();
@@ -172,11 +173,11 @@ namespace Borlay.Injection.Tests
             Assert.IsNotNull(toResolve);
             Assert.AreEqual(5, toResolve.Index);
 
-            toResolve = parent.Resolve<ToResolve2>().Result;
+            toResolve = parent.CreateSession().Resolve<ToResolve2>();
             Assert.IsNotNull(toResolve);
             Assert.AreEqual(5, toResolve.Index);
 
-            toResolve = resolver.Resolve<ToResolve2>().Result;
+            toResolve = resolver.CreateSession().Resolve<ToResolve2>();
             Assert.IsNotNull(toResolve);
             Assert.AreEqual(5, toResolve.Index);
         }
