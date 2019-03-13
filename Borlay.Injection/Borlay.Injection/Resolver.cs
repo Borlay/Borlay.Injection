@@ -10,9 +10,11 @@ namespace Borlay.Injection
     {
         private readonly ConcurrentDictionary<Type, ICreateFactory> providers = new ConcurrentDictionary<Type, ICreateFactory>();
         private readonly ConcurrentDictionary<Type, object> instances = new ConcurrentDictionary<Type, object>();
-        private readonly ConcurrentBag<IDisposable> disposables = new ConcurrentBag<IDisposable>();
+        private readonly ConcurrentStack<IDisposable> disposables = new ConcurrentStack<IDisposable>();
 
         public IResolver Parent { get; }
+
+        private volatile bool isDisposed = false;
 
         public Resolver()
             : this(null)
@@ -130,7 +132,7 @@ namespace Borlay.Injection
             try
             {
                 var instance = session.CreateInstance(type);
-                disposables.Add(session);
+                disposables.Push(session);
                 return instance;
             }
             catch
@@ -240,21 +242,18 @@ namespace Borlay.Injection
 
         public void Dispose()
         {
-            while(instances.Count > 0)
-            {
-                var instance = instances.First();
-                if(instances.TryRemove(instance.Key, out var value))
-                {
-                    if (value is IDisposable disposable)
-                        disposable.Dispose();
-                }
-            }
+            if (!TryDispose(out var exception))
+                throw exception;
+        }
 
-            while (disposables.Count > 0)
-            {
-                if (disposables.TryTake(out var dispose))
-                    dispose.Dispose();
-            }
+        public bool TryDispose(out AggregateException aggregateException)
+        {
+            isDisposed = true;
+
+            var list = instances.Select(i => i.Value).OfType<IDisposable>().ToList();
+            list.AddRange(disposables);
+
+            return list.TryDispose(out aggregateException);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Borlay.Injection
     public class ResolverSession : IResolverSession
     {
         private readonly IResolver resolver;
-        private readonly ConcurrentBag<IDisposable> disposables = new ConcurrentBag<IDisposable>();
+        private readonly ConcurrentStack<IDisposable> disposables = new ConcurrentStack<IDisposable>();
         private volatile bool isDisposed = false;
 
         public IResolver Resolver => resolver;
@@ -46,28 +46,7 @@ namespace Borlay.Injection
         public bool TryDispose(out AggregateException aggregateException)
         {
             isDisposed = true;
-
-            List<Exception> exceptions = new List<Exception>();
-            while (disposables.Count > 0)
-            {
-                try
-                {
-                    if (disposables.TryTake(out var dispose))
-                        dispose.Dispose();
-                }
-                catch(Exception e)
-                {
-                    exceptions.Add(e);
-                }
-            }
-
-            aggregateException = null;
-            if (exceptions.Count > 0)
-            {
-                aggregateException = new AggregateException(exceptions);
-                return false;
-            }
-            return true;
+            return disposables.TryDispose(out aggregateException);
         }
 
         public T Resolve<T>()
@@ -78,7 +57,7 @@ namespace Borlay.Injection
             var createFactory = resolver.Resolve<T>();
             var item = createFactory.Create<T>(this);
             if (!item.IsSingletone)
-                disposables.Add(item);
+                disposables.Push(item);
 
             return item.Result;
         }
@@ -91,7 +70,7 @@ namespace Borlay.Injection
             var createFactory = resolver.Resolve(type);
             var item = createFactory.Create(this);
             if (!item.IsSingletone)
-                disposables.Add(item);
+                disposables.Push(item);
 
             return item.Result;
         }
@@ -106,7 +85,7 @@ namespace Borlay.Injection
             {
                 var item = createFactory.Create<T>(this);
                 if (!item.IsSingletone)
-                    disposables.Add(item);
+                    disposables.Push(item);
 
                 value = item.Result;
                 return true;
@@ -125,7 +104,7 @@ namespace Borlay.Injection
             {
                 var item = createFactory.Create(this);
                 if (!item.IsSingletone)
-                    disposables.Add(item);
+                    disposables.Push(item);
 
                 value = item.Result;
                 return true;

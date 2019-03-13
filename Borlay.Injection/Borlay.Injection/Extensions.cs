@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,34 @@ namespace Borlay.Injection
 {
     public static class Extensions
     {
+        public static bool TryDispose(this IEnumerable<IDisposable> disposables, out AggregateException aggregateException)
+        {
+            List<Exception> exceptions = new List<Exception>();
+            if (disposables.Count() > 0)
+            {
+                IDisposable[] array = disposables.ToArray();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    try
+                    {
+                        array[i].Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        exceptions.Add(e);
+                    }
+                }
+            }
+
+            aggregateException = null;
+            if (exceptions.Count > 0)
+            {
+                aggregateException = new AggregateException(exceptions);
+                return false;
+            }
+            return true;
+        }
+
         public static Tuple<object, Action> ToObject<T>(this Func<Tuple<T, Action>> provider)
         {
             var result = provider.Invoke();

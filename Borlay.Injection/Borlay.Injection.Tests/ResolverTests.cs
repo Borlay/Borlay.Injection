@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Borlay.Injection.Tests
@@ -18,6 +19,28 @@ namespace Borlay.Injection.Tests
             Assert.IsNotNull(toResolve.ToResolve2);
             Assert.IsNotNull(toResolve.ToResolve2.Resolver);
             Assert.IsNotNull(toResolve.ToResolve2.ToResolve4);
+        }
+
+        [TestMethod]
+        public void CreateManyInstance()
+        {
+            var resolver = new Resolver();
+            resolver.LoadFromReference<ResolverTests>();
+
+            Stopwatch watch = Stopwatch.StartNew();
+
+            for (int i = 0; i < 100000; i++)
+            {
+                using (var session = resolver.CreateSession())
+                {
+                    var toResolve = session.CreateInstance<ToResolve>();
+                }
+            }
+
+            resolver.Dispose();
+
+            watch.Stop();
+
         }
 
         [TestMethod]
