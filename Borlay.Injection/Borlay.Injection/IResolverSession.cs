@@ -19,5 +19,7 @@ namespace Borlay.Injection
         bool IsDisposed { get; }
 
         bool TryDispose(out AggregateException aggregateException);
+
+        void AddDisposable(IDisposable disposable);
     }
 }

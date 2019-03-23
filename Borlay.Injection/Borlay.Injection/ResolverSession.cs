@@ -21,6 +21,7 @@ namespace Borlay.Injection
         {
             this.resolver = new Resolver(resolver);
             this.resolver.AddFromParent = true;
+            disposables.Push(this.resolver);
         }
 
         public bool Contains<T>(bool parent)
@@ -133,6 +134,11 @@ namespace Borlay.Injection
             }
 
             return false;
+        }
+
+        public void AddDisposable(IDisposable disposable)
+        {
+            disposables.Push(disposable);
         }
     }
 }

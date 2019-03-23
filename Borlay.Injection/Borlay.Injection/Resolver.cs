@@ -43,9 +43,9 @@ namespace Borlay.Injection
             return false;
         }
 
-        public void Register<T>(Func<IResolverSession, Tuple<T, Action>> provider, bool includeBase = true)
+        public void Register<T>(Func<IResolverSession, Tuple<T, Action>> provider, bool isSingletone, bool includeBase = true)
         {
-            Register(typeof(T), new ResolverItemFactory<T>(provider, false), includeBase);
+            Register(typeof(T), new ResolverItemFactory<T>(provider, isSingletone), includeBase);
         }
 
         public void Register(Type type, ICreateFactory itemFactory, bool includeBase = true)
@@ -143,6 +143,11 @@ namespace Borlay.Injection
                 session.Dispose();
                 throw;
             }
+        }
+
+        public void AddDisposable(IDisposable disposable)
+        {
+            disposables.Push(disposable);
         }
 
         //public virtual T CreateInstance<T>()
