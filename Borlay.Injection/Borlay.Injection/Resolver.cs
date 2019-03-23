@@ -14,6 +14,8 @@ namespace Borlay.Injection
 
         public IResolver Parent { get; }
 
+        public bool AddFromParent { get; set; } = false;
+
         private volatile bool isDisposed = false;
 
         public Resolver()
@@ -84,11 +86,12 @@ namespace Borlay.Injection
                 Register(type, new ResolverItemFactory<object>((s) => GetSingletoneInstance(type)), includeBase);
             else
             {
-                Register(type, new ResolverItemFactory<object>((session) =>
-                {
-                    var instance = session.CreateInstance(type);
-                    return new Tuple<object, Action>(instance, null);
-                }, false), includeBase);
+                Register(type, new ResolverItemFactory<object>(type.GetTypeInfo()), includeBase);
+                //(session) =>
+                //{
+                //    var instance = session.CreateInstance(type);
+                //    return new Tuple<object, Action>(instance, null);
+                //}, false), includeBase);
             }
         }
 
@@ -186,7 +189,12 @@ namespace Borlay.Injection
             if (providers.TryGetValue(type, out createFactory))
                 return true;
 
-            return Parent?.TryResolve(type, out createFactory) ?? false;
+            var resolved = Parent?.TryResolve(type, out createFactory) ?? false;
+
+            if (resolved && AddFromParent)
+                Register(type, createFactory, false);
+
+            return resolved;
         }
 
         public virtual void LoadFromReference<T>()

@@ -8,17 +8,19 @@ namespace Borlay.Injection
 {
     public class ResolverSession : IResolverSession
     {
-        private readonly IResolver resolver;
+        private readonly Resolver resolver;
         private readonly ConcurrentStack<IDisposable> disposables = new ConcurrentStack<IDisposable>();
+        private readonly ConcurrentDictionary<Type, object> instances = new ConcurrentDictionary<Type, object>();
         private volatile bool isDisposed = false;
 
-        public IResolver Resolver => resolver;
+        public Resolver Resolver => resolver;
 
         public bool IsDisposed => isDisposed;
 
         public ResolverSession(IResolver resolver)
         {
-            this.resolver = resolver;
+            this.resolver = new Resolver(resolver);
+            this.resolver.AddFromParent = true;
         }
 
         public bool Contains<T>(bool parent)
@@ -54,11 +56,14 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
+            if (instances.TryGetValue(typeof(T), out var instance)) return (T)instance;
+
             var createFactory = resolver.Resolve<T>();
             var item = createFactory.Create<T>(this);
             if (!item.IsSingletone)
                 disposables.Push(item);
 
+            instances[typeof(T)] = item.Result;
             return item.Result;
         }
 
@@ -67,11 +72,14 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
+            if (instances.TryGetValue(type, out var instance)) return instance;
+
             var createFactory = resolver.Resolve(type);
             var item = createFactory.Create(this);
             if (!item.IsSingletone)
                 disposables.Push(item);
 
+            instances[type] = item.Result;
             return item.Result;
         }
 
@@ -80,6 +88,12 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
+            if (instances.TryGetValue(typeof(T), out var instance))
+            {
+                value = (T)instance;
+                return true;
+            }
+
             value = default(T);
             if(resolver.TryResolve<T>(out var createFactory))
             {
@@ -87,6 +101,7 @@ namespace Borlay.Injection
                 if (!item.IsSingletone)
                     disposables.Push(item);
 
+                instances[typeof(T)] = item.Result;
                 value = item.Result;
                 return true;
             }
@@ -99,6 +114,12 @@ namespace Borlay.Injection
             if (isDisposed)
                 throw new ObjectDisposedException(nameof(ResolverSession));
 
+            if (instances.TryGetValue(type, out var instance))
+            {
+                value = instance;
+                return true;
+            }
+
             value = null;
             if (resolver.TryResolve(type, out var createFactory))
             {
@@ -106,6 +127,7 @@ namespace Borlay.Injection
                 if (!item.IsSingletone)
                     disposables.Push(item);
 
+                instances[type] = item.Result;
                 value = item.Result;
                 return true;
             }

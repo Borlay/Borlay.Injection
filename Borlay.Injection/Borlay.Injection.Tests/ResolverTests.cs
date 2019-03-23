@@ -22,7 +22,7 @@ namespace Borlay.Injection.Tests
         }
 
         [TestMethod]
-        public void CreateManyInstance()
+        public void CreateManyInstanceSingleSession()
         {
             var resolver = new Resolver();
             resolver.LoadFromReference<ResolverTests>();
@@ -32,6 +32,28 @@ namespace Borlay.Injection.Tests
             using (var session = resolver.CreateSession())
             {
                 for (int i = 0; i < 100000; i++)
+                {
+                    var toResolve = session.CreateInstance<ToResolve>();
+                }
+            }
+
+            resolver.Dispose();
+
+            watch.Stop();
+
+        }
+
+        [TestMethod]
+        public void CreateManyInstanceManySession()
+        {
+            var resolver = new Resolver();
+            resolver.LoadFromReference<ResolverTests>();
+
+            Stopwatch watch = Stopwatch.StartNew();
+
+            for (int i = 0; i < 100000; i++)
+            {
+                using (var session = resolver.CreateSession())
                 {
                     var toResolve = session.CreateInstance<ToResolve>();
                 }
