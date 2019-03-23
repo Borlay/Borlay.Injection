@@ -6,6 +6,8 @@ namespace Borlay.Injection
 {
     public interface IResolverSession : IDisposable
     {
+        Resolver Resolver { get; }
+
         bool Contains<T>(bool parent);
         bool Contains(Type type, bool parent);
         bool TryResolve<T>(out T value);

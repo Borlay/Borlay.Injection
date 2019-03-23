@@ -16,5 +16,7 @@ namespace Borlay.Injection
         ICreateFactory Resolve(Type type);
 
         IResolverSession CreateSession();
+
+        bool TryDispose(out AggregateException aggregateException);
     }
 }

@@ -85,5 +85,12 @@ namespace Borlay.Injection
         {
             // do nothing
         }
+
+        public bool TryDispose(out AggregateException aggregateException)
+        {
+            // do nothing
+            aggregateException = null;
+            return true;
+        }
     }
 }
