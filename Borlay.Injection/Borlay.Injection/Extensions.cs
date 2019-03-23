@@ -43,36 +43,36 @@ namespace Borlay.Injection
             return new Tuple<object, Action>(result.Item1, result.Item2);
         }
 
-        public static T CreateInstance<T>(this IResolverSession resolver)
+        public static T CreateInstance<T>(this IResolverSession session)
         {
-            return (T)CreateInstance(resolver, typeof(T));
+            return (T)CreateInstance(session, typeof(T));
         }
 
-        public static object CreateInstance(this IResolverSession resolver, Type type)
+        public static object CreateInstance(this IResolverSession session, Type type)
         {
-            return CreateInstance(resolver, type.GetTypeInfo());
+            return CreateInstance(session, type.GetTypeInfo());
         }
 
-        public static bool TryCreateInstance(this IResolverSession resolver, Type type, out object obj)
+        public static bool TryCreateInstance(this IResolverSession session, Type type, out object obj)
         {
-            return TryCreateInstance(resolver, type.GetTypeInfo(), out obj);
+            return TryCreateInstance(session, type.GetTypeInfo(), out obj);
         }
 
-        public static object CreateInstance(this IResolverSession resolver, TypeInfo typeInfo)
+        public static object CreateInstance(this IResolverSession session, TypeInfo typeInfo)
         {
-            if (TryCreateInstance(resolver, typeInfo, out var obj))
+            if (TryCreateInstance(session, typeInfo, out var obj))
                 return obj;
 
             throw new KeyNotFoundException($"Constructor for type $'{typeInfo.Name}' not found");
         }
 
-        public static bool TryCreateInstance(this IResolverSession resolver, TypeInfo typeInfo, out object obj)
+        public static bool TryCreateInstance(this IResolverSession session, TypeInfo typeInfo, out object obj)
         {
             var constructors = typeInfo.GetConstructors().OrderByDescending(c => c.GetParameters().Length).ToArray();
 
             foreach (var constructorInfo in constructors)
             {
-                if (TryCreateInstance(resolver, constructorInfo, out obj))
+                if (TryCreateInstance(session, constructorInfo, out obj))
                     return true;
             }
 
@@ -80,22 +80,22 @@ namespace Borlay.Injection
             return false;
         }
 
-        public static object CreateInstance(this IResolverSession resolver, ConstructorInfo constructorInfo)
+        public static object CreateInstance(this IResolverSession session, ConstructorInfo constructorInfo)
         {
-            if (resolver == null)
-                throw new ArgumentNullException(nameof(resolver));
+            if (session == null)
+                throw new ArgumentNullException(nameof(session));
             if (constructorInfo == null)
                 throw new ArgumentNullException(nameof(constructorInfo));
 
             var parameters = constructorInfo.GetParameters();
-            var arguments = parameters.Select(p => resolver.Resolve(p.ParameterType)).ToArray();
+            var arguments = parameters.Select(p => session.Resolve(p.ParameterType)).ToArray();
             return constructorInfo.Invoke(arguments);
         }
 
-        public static bool TryCreateInstance(this IResolverSession resolver, ConstructorInfo constructorInfo, out object obj)
+        public static bool TryCreateInstance(this IResolverSession session, ConstructorInfo constructorInfo, out object obj)
         {
-            if (resolver == null)
-                throw new ArgumentNullException(nameof(resolver));
+            if (session == null)
+                throw new ArgumentNullException(nameof(session));
             if (constructorInfo == null)
                 throw new ArgumentNullException(nameof(constructorInfo));
 
@@ -105,7 +105,7 @@ namespace Borlay.Injection
             object[] arguments = new object[parameters.Length];
             for (int i = 0; i < parameters.Length; i++)
             {
-                if (!resolver.TryResolve(parameters[i].ParameterType, out var value))
+                if (!session.TryResolve(parameters[i].ParameterType, out var value))
                     return false;
 
                 arguments[i] = value;

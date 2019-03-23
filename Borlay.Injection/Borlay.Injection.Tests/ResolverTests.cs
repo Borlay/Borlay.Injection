@@ -29,9 +29,9 @@ namespace Borlay.Injection.Tests
 
             Stopwatch watch = Stopwatch.StartNew();
 
-            for (int i = 0; i < 100000; i++)
+            using (var session = resolver.CreateSession())
             {
-                using (var session = resolver.CreateSession())
+                for (int i = 0; i < 100000; i++)
                 {
                     var toResolve = session.CreateInstance<ToResolve>();
                 }
@@ -254,7 +254,7 @@ namespace Borlay.Injection.Tests
     }
 
 
-    [Resolve(Singletone = true, IncludeBase = false)]
+    [Resolve(Singletone = false, IncludeBase = false)]
     public class ToResolve2 : BaseResolve2
     {
         public IResolver Resolver { get; }
