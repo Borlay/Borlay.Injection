@@ -20,6 +20,7 @@ namespace Borlay.Injection
         public ResolverSession(IResolver resolver)
         {
             this.resolver = new Resolver(resolver);
+            this.resolver.Register(this, true);
             this.resolver.AddFromParent = true;
             disposables.Push(this.resolver);
         }
