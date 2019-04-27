@@ -15,6 +15,8 @@ namespace Borlay.Injection
         ICreateFactory Resolve<T>();
         ICreateFactory Resolve(Type type);
 
+        bool TryResolveSingletone(Type type, out object value);
+
         IResolverSession CreateSession();
 
         bool TryDispose(out AggregateException aggregateException);

@@ -117,13 +117,13 @@ namespace Borlay.Injection
             return (T)ResolveSingletone(typeof(T));
         }
 
-        public virtual bool TryGetSingletone(Type type, out object value)
+        public virtual bool TryResolveSingletone(Type type, out object value)
         {
             if (instances.TryGetValue(type, out value))
                 return true;
-            else if (Parent != null && Parent is Resolver resolver)
+            else if (Parent != null)
             {
-                if (resolver.TryGetSingletone(type, out value))
+                if (Parent.TryResolveSingletone(type, out value))
                     return true;
             }
 
@@ -153,7 +153,7 @@ namespace Borlay.Injection
 
         public virtual object ResolveSingletone(Type type)
         {
-            if (TryGetSingletone(type, out var value))
+            if (TryResolveSingletone(type, out var value))
                 return value;
 
             var instance = CreateSingletoneInstance(type);

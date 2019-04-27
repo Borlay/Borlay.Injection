@@ -92,5 +92,17 @@ namespace Borlay.Injection
             aggregateException = null;
             return true;
         }
+
+        public bool TryResolveSingletone(Type type, out object value)
+        {
+            value = null;
+            object val = null;
+            if (Any(r => r.TryResolveSingletone(type, out val)))
+            {
+                value = val;
+                return true;
+            }
+            return false;
+        }
     }
 }
