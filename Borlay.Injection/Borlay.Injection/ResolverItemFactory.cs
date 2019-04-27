@@ -53,7 +53,10 @@ namespace Borlay.Injection
             Tuple<TResult, Action> tuple = null;
             this.Factory = (s) =>
             {
-                return tuple ?? (tuple = new Tuple<TResult, Action>(singletoneProvider(s), null));
+                lock (this)
+                {
+                    return tuple ?? (tuple = new Tuple<TResult, Action>(singletoneProvider(s), null));
+                }
             };
             this.IsSingletone = true;
         }

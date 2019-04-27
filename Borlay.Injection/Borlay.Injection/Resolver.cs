@@ -105,32 +105,60 @@ namespace Borlay.Injection
         public bool Register(Type type, int priority, bool includeBase, bool singleton = false)
         {
             if(singleton)
-                return Register(type, new ResolverItemFactory<object>((s) => GetSingletoneInstance(type)), priority, includeBase);
+                return Register(type, new ResolverItemFactory<object>((s) => CreateSingletoneInstance(type)), priority, includeBase);
             else
             {
                 return Register(type, new ResolverItemFactory<object>(type.GetTypeInfo()), priority, includeBase);
             }
         }
 
-        public virtual T GetSingletoneInstance<T>()
+        public virtual T ResolveSingletone<T>()
         {
-            return (T)GetSingletoneInstance(typeof(T));
+            return (T)ResolveSingletone(typeof(T));
         }
 
-        public virtual object GetSingletoneInstance(Type type)
+        public virtual bool TryGetSingletone(Type type, out object value)
         {
-            if (instances.TryGetValue(type, out var value))
-                return value;
-            else if(providers.ContainsKey(type))
+            if (instances.TryGetValue(type, out value))
+                return true;
+            else if (Parent != null && Parent is Resolver resolver)
             {
-                var instance = CreateSingletoneInstance(type);
-                instances[type] = instance;
-                return instance;
+                if (resolver.TryGetSingletone(type, out value))
+                    return true;
             }
-            else if (Parent != null && Parent is Resolver)
-                return ((Resolver)Parent).GetSingletoneInstance(type);
 
-            return CreateSingletoneInstance(type);
+            if (providers.TryGetValue(type, out var tuple))
+            {
+                var session = this.CreateSession();
+                try
+                {
+                    var factory = tuple.Item2.Create(session);
+                    var instance = factory.Result;
+                    instances[type] = instance;
+                    disposables.Push(session);
+                    session.AddDisposable(factory);
+
+                    value = instance;
+                    return true;
+                }
+                catch
+                {
+                    session.Dispose();
+                    throw;
+                }
+            }
+
+            return false;
+        }
+
+        public virtual object ResolveSingletone(Type type)
+        {
+            if (TryGetSingletone(type, out var value))
+                return value;
+
+            var instance = CreateSingletoneInstance(type);
+            instances[type] = instance;
+            return instance;
         }
 
         protected object CreateSingletoneInstance(Type type)
@@ -140,6 +168,8 @@ namespace Borlay.Injection
             {
                 var instance = session.CreateInstance(type);
                 disposables.Push(session);
+                if (instance is IDisposable disposable)
+                    disposables.Push(disposable);
                 return instance;
             }
             catch

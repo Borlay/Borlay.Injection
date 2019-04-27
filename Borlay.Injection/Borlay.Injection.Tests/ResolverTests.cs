@@ -209,12 +209,12 @@ namespace Borlay.Injection.Tests
 
             parent.LoadFromReference<ResolverTests>();
 
-            var toResolve = resolver.GetSingletoneInstance<ToResolve2>();
+            var toResolve = resolver.ResolveSingletone<ToResolve2>();
             Assert.IsNotNull(toResolve);
 
             toResolve.Index = 5;
 
-            toResolve = parent.GetSingletoneInstance<ToResolve2>();
+            toResolve = parent.ResolveSingletone<ToResolve2>();
             Assert.IsNotNull(toResolve);
             Assert.AreEqual(5, toResolve.Index);
 
