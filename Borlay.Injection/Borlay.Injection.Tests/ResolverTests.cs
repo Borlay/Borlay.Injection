@@ -276,7 +276,7 @@ namespace Borlay.Injection.Tests
     }
 
 
-    [Resolve(Singletone = false, IncludeBase = false)]
+    [Resolve(Singletone = true, IncludeBase = false)]
     public class ToResolve2 : BaseResolve2
     {
         public IResolver Resolver { get; }
@@ -292,7 +292,7 @@ namespace Borlay.Injection.Tests
         }
     }
 
-    [Resolve(IncludeBase = true)]
+    [Resolve(IncludeBase = true, Priority = 1)]
     public class ToResolve3 : BaseResolve
     {
         public IResolver Resolver { get; }

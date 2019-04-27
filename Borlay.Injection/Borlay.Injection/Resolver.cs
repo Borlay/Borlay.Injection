@@ -8,7 +8,7 @@ namespace Borlay.Injection
 {
     public class Resolver : IResolver
     {
-        private readonly ConcurrentDictionary<Type, ICreateFactory> providers = new ConcurrentDictionary<Type, ICreateFactory>();
+        private readonly ConcurrentDictionary<Type, Tuple<int, ICreateFactory>> providers = new ConcurrentDictionary<Type, Tuple<int, ICreateFactory>>();
         private readonly ConcurrentDictionary<Type, object> instances = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentStack<IDisposable> disposables = new ConcurrentStack<IDisposable>();
 
@@ -29,8 +29,6 @@ namespace Borlay.Injection
             Register(this, true);
         }
 
-        // todo add Contains
-
         public bool Contains<T>(bool parent)
         {
             return Contains(typeof(T), parent);
@@ -43,70 +41,76 @@ namespace Borlay.Injection
             return false;
         }
 
-        public void Register<T>(Func<IResolverSession, Tuple<T, Action>> provider, bool isSingletone, bool includeBase = true)
+        public bool Register<T>(Func<IResolverSession, Tuple<T, Action>> provider, bool isSingletone, bool includeBase = true)
         {
-            Register(typeof(T), new ResolverItemFactory<T>(provider, isSingletone), includeBase);
+            return Register(typeof(T), new ResolverItemFactory<T>(provider, isSingletone), includeBase);
         }
 
-        public void Register(Type type, ICreateFactory itemFactory, bool includeBase = true)
+        public bool Register<T>(Func<IResolverSession, T> provider, bool isSingletone, bool includeBase = true)
         {
-            providers[type] = itemFactory;
+            return Register(typeof(T), new ResolverItemFactory<T>((s) => new Tuple<T, Action>(provider(s), null), isSingletone), includeBase);
+        }
+
+        public bool Register(Type type, ICreateFactory itemFactory, bool includeBase = true)
+        {
+            return Register(type, itemFactory, 0, includeBase);
+        }
+
+        public bool Register(Type type, ICreateFactory itemFactory, int priority, bool includeBase = true)
+        {
+            if (providers.TryGetValue(type, out var tuple))
+            {
+                if (tuple.Item1 >= priority)
+                    return false;
+            }
+
+            providers[type] = new Tuple<int, ICreateFactory>(priority, itemFactory);
 
             if (includeBase)
             {
                 var baseType = type.GetTypeInfo().BaseType;
-                if(baseType != null && baseType != typeof(object))
-                    Register(baseType, itemFactory, includeBase);
+                if (baseType != null && baseType != typeof(object))
+                    Register(baseType, itemFactory, priority, includeBase);
 
-                foreach(var interf in type.GetTypeInfo().GetInterfaces())
+                foreach (var interf in type.GetTypeInfo().GetInterfaces())
                 {
-                    Register(interf, itemFactory, includeBase);
+                    Register(interf, itemFactory, priority, includeBase);
                 }
             }
+
+            return true;
         }
 
-        public void RegisterAs<T>(T instance, bool includeBase = true)
+        public bool RegisterAs<T>(T instance, bool includeBase = true)
         {
-            Register(typeof(T), new ResolverItemFactory<T>(instance), includeBase);
+            return Register(typeof(T), new ResolverItemFactory<T>(instance), includeBase);
         }
 
-        public void Register(object instance, bool includeBase = true)
+        public bool Register(object instance, bool includeBase = true)
         {
-            Register(instance.GetType(), new ResolverItemFactory<object>(instance), includeBase);
+            return Register(instance.GetType(), new ResolverItemFactory<object>(instance), includeBase);
         }
 
-        public void Register<T>(bool includeBase, bool singleton = false) where T : class, new()
+        public bool Register<T>(bool includeBase, bool singleton = false) where T : class, new()
         {
-            Register(typeof(T), includeBase, singleton);
+            return Register(typeof(T), includeBase, singleton);
         }
 
-        public void Register(Type type, bool includeBase, bool singleton = false)
+        public bool Register(Type type, bool includeBase, bool singleton = false)
+        {
+            return Register(type, 0, includeBase, singleton);
+        }
+
+
+        public bool Register(Type type, int priority, bool includeBase, bool singleton = false)
         {
             if(singleton)
-                Register(type, new ResolverItemFactory<object>((s) => GetSingletoneInstance(type)), includeBase);
+                return Register(type, new ResolverItemFactory<object>((s) => GetSingletoneInstance(type)), priority, includeBase);
             else
             {
-                Register(type, new ResolverItemFactory<object>(type.GetTypeInfo()), includeBase);
-                //(session) =>
-                //{
-                //    var instance = session.CreateInstance(type);
-                //    return new Tuple<object, Action>(instance, null);
-                //}, false), includeBase);
+                return Register(type, new ResolverItemFactory<object>(type.GetTypeInfo()), priority, includeBase);
             }
         }
-
-        //protected virtual object GetInstance<T>(bool singletone)
-        //{
-        //    return GetInstance(typeof(T), singletone);
-        //}
-
-        //protected virtual object GetInstance(Type type, bool singletone)
-        //{
-        //    if(singletone)
-        //        return GetSingletoneInstance(type);
-
-        //    return CreateInstance(type);
-        //}
 
         public virtual T GetSingletoneInstance<T>()
         {
@@ -150,21 +154,6 @@ namespace Borlay.Injection
             disposables.Push(disposable);
         }
 
-        //public virtual T CreateInstance<T>()
-        //{
-        //    return (T)CreateInstance(typeof(T));
-        //}
-
-        //public virtual object CreateInstance(Type type)
-        //{
-        //    return CreateInstance(type.GetTypeInfo());
-        //}
-
-        //public virtual object CreateInstance(TypeInfo typeInfo)
-        //{
-        //    return CreateInstance(this, typeInfo);
-        //}
-
         public ICreateFactory Resolve<T>()
         {
             return Resolve(typeof(T));
@@ -191,8 +180,11 @@ namespace Borlay.Injection
         public bool TryResolve(Type type, out ICreateFactory createFactory)
         {
             createFactory = null;
-            if (providers.TryGetValue(type, out createFactory))
+            if (providers.TryGetValue(type, out var tuple))
+            {
+                createFactory = tuple.Item2;
                 return true;
+            }
 
             var resolved = Parent?.TryResolve(type, out createFactory) ?? false;
 
@@ -214,7 +206,8 @@ namespace Borlay.Injection
             {
                 var resolve = GetCustomAttribute<ResolveAttribute>(type.GetTypeInfo());
                 var singletone = resolve.Singletone;
-                Register(resolve.AsType ?? type, resolve.IncludeBase, resolve.Singletone);
+                var priority = resolve.Priority;
+                Register(resolve.AsType ?? type, priority, resolve.IncludeBase, resolve.Singletone);
             }
         }
 
@@ -252,7 +245,6 @@ namespace Borlay.Injection
         {
             return new ResolverSession(this);
         }
-
         public void Dispose()
         {
             if (!TryDispose(out var exception))

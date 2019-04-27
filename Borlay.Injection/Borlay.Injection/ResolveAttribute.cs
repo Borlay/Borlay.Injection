@@ -13,6 +13,8 @@ namespace Borlay.Injection
 
         public Type AsType { get; set; }
 
+        public int Priority { get; set; } = 0;
+
         public ResolveAttribute()
         {
             this.Singletone = false;
