@@ -17,6 +17,8 @@ namespace Borlay.Injection
 
         bool TryResolveSingletone(Type type, out object value);
 
+        bool TryResolveSingletone<T>(out T value);
+
         IResolverSession CreateSession();
 
         bool TryDispose(out AggregateException aggregateException);

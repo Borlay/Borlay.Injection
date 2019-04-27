@@ -104,5 +104,17 @@ namespace Borlay.Injection
             }
             return false;
         }
+
+        public virtual bool TryResolveSingletone<T>(out T value)
+        {
+            value = default(T);
+            T val = default(T);
+            if (Any(r => r.TryResolveSingletone<T>(out val)))
+            {
+                value = val;
+                return true;
+            }
+            return false;
+        }
     }
 }
