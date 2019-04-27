@@ -60,7 +60,7 @@ namespace Borlay.Injection
         {
             if (providers.TryGetValue(type, out var tuple))
             {
-                if (tuple.Item1 >= priority)
+                if (tuple.Item1 > priority)
                     return false;
             }
 
